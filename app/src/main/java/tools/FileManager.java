@@ -550,11 +550,21 @@ public final class FileManager {
             restore = br.readLine();
             br.close();
 
-            MessageDigest digester = MessageDigest.getInstance("MD5");
+            if (checksum == null || restore == null)
+                return "invalid checksum";
+
+            MessageDigest digester;
+            if (checksum.length() == 43) {
+                digester = MessageDigest.getInstance("SHA-256");
+            } else if (checksum.length() == 22) {
+                digester = MessageDigest.getInstance("MD5");
+            } else {
+                return "invalid checksum";
+            }
             digester.update(restore.getBytes(StandardCharsets.UTF_8));
             String digest = Base64.encodeToString(digester.digest(), Base64.NO_WRAP + Base64.NO_PADDING);
 
-            if (checksum.equals(digest)) {
+            if (digest.equals(checksum)) {
                 if (fileHandler.decodeFile(restore)) {//twin
                     Toast.makeText(mActivity, mActivity.getString(backupMode ? R.string.msg_restore_ok : R.string.msg_import_ok), Toast.LENGTH_SHORT).show();
                     return null;
@@ -576,7 +586,7 @@ public final class FileManager {
     }
 
     private static void writeFile(GZIPOutputStream ostream, String content, String mimetype) throws NoSuchAlgorithmException, IOException {
-        MessageDigest digester = MessageDigest.getInstance("MD5");
+        MessageDigest digester = MessageDigest.getInstance("SHA-256");
         digester.update(content.getBytes(StandardCharsets.UTF_8));
         String digest = Base64.encodeToString(digester.digest(), Base64.NO_WRAP + Base64.NO_PADDING);
 
